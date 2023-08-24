@@ -1,0 +1,42 @@
+name: SAST - DAST
+on: 
+  push:
+    branches:
+      - 'main'
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: main
+      - uses: AppThreat/sast-scan-action@v1.0.0
+        with:
+          output: reports
+          type: "python"
+      - uses: actions/upload-artifact@v1.0.0
+        if: always()
+        with:
+          name: reports
+          path: reports
+
+
+  Burp-Dastardly:
+    name: Burpsuite Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Dastardly Action Step
+        continue-on-error: true
+        uses: PortSwigger/dastardly-github-action@main
+        with:
+          target-url: 'http://103.31.38.112:8081/get_users?hostname=ls'
+      
+      - name: Publish Test Report with JUnit
+        if: always()
+        uses: mikepenz/action-junit-report@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          report_paths: '**/dastardly-report.xml'
+          require_tests: true
+          
